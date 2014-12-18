@@ -1,0 +1,16 @@
+{
+    "name": "sip_stack_verification",
+    "version": "0.0.1",
+    "description": "CIC Statistics in the service cloud console",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "~4.9.x",
+        "request":"*",
+        "cors":"*",
+        "sip":"*"
+    },
+    "license": "MPLv2"
+}

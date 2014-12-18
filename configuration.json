@@ -1,0 +1,13 @@
+{
+    "pollInterval": 2000,
+    "servers":[
+        {
+            "name":"Morbo",
+            "ip":"172.19.34.165"
+        },
+        {
+            "name":"integrations 1",
+            "ip":"172.19.34.93"
+        }
+    ]
+}
