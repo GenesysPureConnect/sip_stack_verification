@@ -1,0 +1,38 @@
+<html>
+<head>
+    <title>SIP Devices</title>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+
+    <script>
+        setInterval(function(){
+            $.get( "/devices", function( data ) {
+                var table="<table class='table table-bordered' ><tr><th>Name</th><th>IP</th><th>Status</th></tr>"
+                for(var key in data){
+                    table += "<tr><td>";
+                    table += key;
+                    table += "</td><td>";
+                    table += data[key].ip;
+                    table += "</td><td>";
+                    if(data[key].status == "up"){
+                        table += "<span class='label label-success'>"
+                    }else{
+                        table += "<span class='label label-danger'>"
+                    }
+                    table += data[key].status;
+                    table += "</span></td></tr>";
+
+                }
+                table += "</table>"
+                $('#status').html(table);
+            });
+
+        }, 2000);
+    </script>
+</head>
+<body>
+    <div id='status' style='width:550px'>
+    </div>
+</body>
+</html>

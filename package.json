@@ -10,7 +10,9 @@
         "express": "~4.9.x",
         "request":"*",
         "cors":"*",
-        "sip":"*"
+        "sip":"*",
+        "emailjs": "*",
+        "body-parser": "*"
     },
     "license": "MPLv2"
 }

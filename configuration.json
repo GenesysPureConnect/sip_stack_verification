@@ -9,5 +9,13 @@
             "name":"integrations 1",
             "ip":"172.19.34.93"
         }
-    ]
+    ],
+    "notifications":{
+        "webhook":{
+            "host" : "localhost",
+            "port": 8080,
+            "path" : "/webhooktest"
+        }
+
+    }
 }

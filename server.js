@@ -1,29 +1,55 @@
 var express = require('express')
 var app = express();
 var fs = require('fs');
-var cors = require('cors')
-app.use(cors())
-
-app.set('port', (process.env.PORT || 8080))
-
+var cors = require('cors');
+var path = require('path');
+//var email = require('emailjs');
 var request = require('request');
+var util = require('util');
+var os = require('os');
+var sip = require('sip');
+var http = require('http');
+var bodyParser = require('body-parser');
+
+app.use(express.static('public'));
+app.use(cors())
+app.set('port', (process.env.PORT || 8080))
+app.use(bodyParser.json());
 
 var messageTimer = null
 
 console.log("app starting")
 
-var util = require('util');
-var os = require('os');
-var sip = require('sip');
+
+/*
+var server  = email.server.connect({
+
+    host:    "qs-domino8",
+    ssl:     false
+});
+
+// send the message and get a callback with an error or details of the message that was sent
+server.send({
+    text:    "i hope this works",
+    from:    "kevin.glinski@inin.com",
+    to:      "kevin.glinski@inin.com",
+    subject: "testing emailjs"
+}, function(err, message) { console.log(err );
+console.log('--');
+console.log(message) });
+*/
+
 
 function rstring() { return Math.floor(Math.random()*1e6).toString(); }
 
 var config = require('./configuration.json');
+var devices = {};
 
 sip.start({}, function(rq) {});
 
-messageTimer = setInterval(pollDevices, 10000);
-
+//timeout in the sip library is 120000 and is not configurable, lets set our poll higher than that so we don't have more than 1 ping at a time
+pollDevices();
+messageTimer = setInterval(pollDevices, 121000);
 
 function pollDevices(){
     for(var i=0; i< config.servers.length; i++){
@@ -32,9 +58,43 @@ function pollDevices(){
     }
 }
 
-function sendOptions(ip, name){
 
-    ip = "sip:" + ip + ":5060";
+
+function sendWebHook(name, data) {
+
+    if( config.notifications.webhook.host || config.notifications.webhook.host === ""){
+    //    return;
+    }
+
+    data.name = name;
+
+    // An object of options to indicate where to post to
+    var post_options = {
+        host: config.notifications.webhook.host,
+        port: config.notifications.webhook.port,
+        path: config.notifications.webhook.path,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': JSON.stringify(data).length
+        }
+    };
+
+    // Set up the request
+    var post_req = http.request(post_options, function(res) {
+        res.setEncoding('utf8');
+    });
+
+    // post the data
+    console.log("calling webhook");
+    post_req.write(JSON.stringify(data));
+    post_req.end();
+
+}
+
+function sendOptions(baseIp, name){
+
+    ip = "sip:" + baseIp + ":5060";
 
 
     sip.send({
@@ -50,42 +110,53 @@ function sendOptions(ip, name){
     },
     function(rs) {
 
+        var status = {
+            ip: baseIp
+        }
+
         if(rs.status == 200){
+            status.status = "up"
             console.log(name + " UP")
         }
         else{
             //console.log(rs);
+            status.status = "down"
             console.log(name + " DOWN")
 
         }
+        //console.log(rs)
+
+        var oldData = devices[name];
+
+        if(oldData != null && oldData.status != status.status){
+            sendWebHook(name, status);
+        }else if(oldData == null){
+            sendWebHook(name, status);
+        }
+
+        devices[name] = status;
     });
 }
 
 
-/*
+
 app.listen(app.get('port'), function() {
     console.log("SIP Verification app is running at localhost:" + app.get('port'))
 
 })
 
 
-app.get('/workgroupstatistics', function(request, response){
+app.get('/devices', function(request, response){
+    response.send(devices);
+})
 
-    var workgroupStats = stats.getWorkgroupStatCatalog();
+app.get('/', function(request, response){
 
-    if(request.query.workgroups == null || request.query.workgroups == 'null')
-        {
-            response.send(workgroupStats);
-            return;
-        }
+    response.sendFile(path.join(__dirname,"index.html"));
+})
 
-        var workgroupFilter = request.query.workgroups.toLowerCase().split(',')
-        var returnData = {};
+app.post('/webhooktest', function(req, res){
+    console.log('webhook: ' + JSON.stringify(req.body));
+    res.send();
 
-        for(var workgroupKey in workgroupStats){
-            if(workgroupFilter.indexOf(workgroupKey.toLowerCase()) > -1){
-                returnData[workgroupKey] = workgroupStats[workgroupKey];
-            }
-        }
-        response.send(returnData);
-    })*/
+})
