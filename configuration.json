@@ -1,5 +1,4 @@
 {
-    "pollInterval": 2000,
     "servers":[
         {
             "name":"Morbo",
@@ -15,6 +14,20 @@
             "host" : "localhost",
             "port": 8080,
             "path" : "/webhooktest"
+        },
+        "email":{
+            "configuration":{
+                "user": "",
+                "password":"",
+                "host":"morbo.dev2000.com",
+                "ssl": false
+            },
+            "message":{
+                "from":"kevin.glinski@dev2000.com",
+                "to":"kevin.glinski@dev2000.com"
+            }
+
+
         }
 
     }

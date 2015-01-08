@@ -1,3 +1,11 @@
+/*
+* Copyright (c) 2015 Interactive Intelligence
+*
+* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
 var express = require('express')
 var app = express();
 var fs = require('fs');
@@ -10,6 +18,8 @@ var os = require('os');
 var sip = require('sip');
 var http = require('http');
 var bodyParser = require('body-parser');
+var email = require('emailjs/email');
+
 
 app.use(express.static('public'));
 app.use(cors())
@@ -20,26 +30,7 @@ var messageTimer = null
 
 console.log("app starting")
 
-
-/*
-var server  = email.server.connect({
-
-    host:    "qs-domino8",
-    ssl:     false
-});
-
-// send the message and get a callback with an error or details of the message that was sent
-server.send({
-    text:    "i hope this works",
-    from:    "kevin.glinski@inin.com",
-    to:      "kevin.glinski@inin.com",
-    subject: "testing emailjs"
-}, function(err, message) { console.log(err );
-console.log('--');
-console.log(message) });
-*/
-
-
+//Generates a random string, used in the options message
 function rstring() { return Math.floor(Math.random()*1e6).toString(); }
 
 var config = require('./configuration.json');
@@ -58,12 +49,36 @@ function pollDevices(){
     }
 }
 
+//sends an outbound email for status changes
+function sendEmail(name, data) {
 
+    if( config.notifications.email.configuration.host == null || config.notifications.email.configuration.host === ""){
+        return;
+    }
 
+    var emailConfig = config.notifications.email.configuration;
+    var server  = email.server.connect(emailConfig);
+
+    var sendParams = config.notifications.email.message;
+    sendParams.subject = "SIP Stack for " + name + " is " + data.status;
+    sendParams.text = "Server: " + name + "\nIP: " + data.ip + "\nStatus: " + data.status
+
+    console.log("sending email to " + sendParams.to)
+    server.send(sendParams, function(err, message) {
+        if(err){
+            console.log("ERROR sending email: " + err)
+        }else{
+            console.log("email sent")
+        }
+    });
+
+}
+
+//makes the outbound POST for a webhook when the status changes.
 function sendWebHook(name, data) {
 
-    if( config.notifications.webhook.host || config.notifications.webhook.host === ""){
-    //    return;
+    if( config.notifications.webhook.host == null || config.notifications.webhook.host === ""){
+        return;
     }
 
     data.name = name;
@@ -92,6 +107,7 @@ function sendWebHook(name, data) {
 
 }
 
+//handles sending an options message to a server
 function sendOptions(baseIp, name){
 
     ip = "sip:" + baseIp + ":5060";
@@ -119,19 +135,19 @@ function sendOptions(baseIp, name){
             console.log(name + " UP")
         }
         else{
-            //console.log(rs);
             status.status = "down"
             console.log(name + " DOWN")
 
         }
-        //console.log(rs)
 
         var oldData = devices[name];
 
         if(oldData != null && oldData.status != status.status){
             sendWebHook(name, status);
+            sendEmail(name, status);
         }else if(oldData == null){
             sendWebHook(name, status);
+            sendEmail(name, status);
         }
 
         devices[name] = status;
@@ -151,12 +167,11 @@ app.get('/devices', function(request, response){
 })
 
 app.get('/', function(request, response){
-
     response.sendFile(path.join(__dirname,"index.html"));
 })
 
 app.post('/webhooktest', function(req, res){
-    console.log('webhook: ' + JSON.stringify(req.body));
+    console.log('webhook received: ' + JSON.stringify(req.body));
     res.send();
 
 })
