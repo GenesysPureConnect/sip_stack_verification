@@ -10,12 +10,13 @@ Web Hook
 For the web hooks, an external web service must be setup to handle the POST message.
 
 The contents of the POST contain a JSON object similar to
-
+```
 {
     "ip": "172.19.34.93",
     "status": "down",
     "name": "integrations 1"
 }
+```
 
 Email
 -----
@@ -33,25 +34,25 @@ Configuration
 The service is configured in the configuration.json file.
 
 **servers** - a list of servers to poll each server should have a *name* and *ip* property
-
-"servers":[
-{
+```
+  "servers":[
+  {
     "name":"Morbo",
     "ip":"172.19.34.165"
     },
     {
         "name":"integrations 1",
         "ip":"172.19.34.93"
-    }
-    ],
+  }],
+```
 
-    **notifications** - configuration for the outbound notifications to report on sip status
-    **webhook** - Web hook configuration, requires a host name, port and relative path.  Web hooks are optional.
-    **email** - SMPT email configuration, can be anonymous or with credentials.  Email notifications are optional.
+**notifications** - configuration for the outbound notifications to report on sip status
+**webhook** - Web hook configuration, requires a host name, port and relative path.  Web hooks are optional.
+**email** - SMPT email configuration, can be anonymous or with credentials.  Email notifications are optional.
 
-    Full Example
-    ------------
-
+Full Example
+------------
+```
     {
         "pollInterval": 2000,
         "servers":[
@@ -87,3 +88,4 @@ The service is configured in the configuration.json file.
 
                     }
                 }
+```
